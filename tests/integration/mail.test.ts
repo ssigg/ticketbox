@@ -17,6 +17,6 @@ it('localizes the password reset mail', async () => {
 	await sendPasswordResetMail(to, 'http://localhost/reset/abc123', 'de');
 
 	const mail = await waitForMail(to);
-	expect(mail.subject).toBe('Setze dein Ticketbox-Passwort zurück');
+	expect(mail.subject).toBe('Ticketbox-Passwort zurücksetzen');
 	expect(mail.body.text).toContain('http://localhost/reset/abc123');
 });

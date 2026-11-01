@@ -15,10 +15,10 @@ test.describe('with a German browser', () => {
 		await page.goto('/admin/forgot-password');
 		await page.getByLabel('E-Mail').fill(user.email);
 		await page.getByRole('button', { name: 'Link senden' }).click();
-		await expect(page.getByRole('status')).toContainText('haben wir dir einen Link gesendet');
+		await expect(page.getByRole('status')).toContainText('haben wir Ihnen einen Link gesendet');
 
 		const mail = await waitForMail(user.email);
-		expect(mail.subject).toBe('Setze dein Ticketbox-Passwort zurück');
+		expect(mail.subject).toBe('Ticketbox-Passwort zurücksetzen');
 		expect(extractLink(mail.body.text)).toContain('/api/auth/reset-password/');
 	});
 });
