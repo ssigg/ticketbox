@@ -1,0 +1,62 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Same ports as compose.yaml so .env.test works unchanged.
+    services:
+      db-test:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ticketbox
+          POSTGRES_PASSWORD: ticketbox
+          POSTGRES_DB: ticketbox_test
+        ports:
+          - 54322:5432
+        options: >-
+          --health-cmd "pg_isready -U ticketbox"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+      inbucket:
+        image: inbucket/inbucket:latest
+        ports:
+          - 9001:9000
+          - 2501:2500
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npm run check
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
