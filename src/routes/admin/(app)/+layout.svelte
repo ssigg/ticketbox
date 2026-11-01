@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { LogOut, Ticket } from '@lucide/svelte';
 	import { authClient } from '#lib/auth-client.ts';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -13,19 +15,15 @@
 	}
 </script>
 
-<header>
-	<a class="brand" href="/admin">Ticketbox</a>
-	{#if current}<span class="tenant">/ {current.name}</span>{/if}
-	<span class="spacer"></span>
-	<span class="muted" data-testid="current-user">{data.user.name}</span>
-	<button class="link" type="button" onclick={signOut}>Sign out</button>
-</header>
-
-<main>{@render children()}</main>
-
-<style>
-	header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
-	.brand { font-weight: 700; color: inherit; text-decoration: none; }
-	.spacer { flex: 1; }
-	main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 16px; }
-</style>
+<div class="min-h-svh bg-muted/40">
+	<header class="border-b bg-background">
+		<div class="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
+			<a href="/admin" class="flex items-center gap-2 font-semibold"><Ticket class="size-5" /> Ticketbox</a>
+			{#if current}<span class="text-muted-foreground">/ {current.name}</span>{/if}
+			<span class="flex-1"></span>
+			<span class="hidden text-sm text-muted-foreground sm:inline" data-testid="current-user">{data.user.name}</span>
+			<Button variant="ghost" size="sm" onclick={signOut}><LogOut /> Sign out</Button>
+		</div>
+	</header>
+	<main class="mx-auto max-w-6xl px-4 py-6">{@render children()}</main>
+</div>

@@ -1,13 +1,13 @@
 <script lang="ts">
+	import { Ticket } from '@lucide/svelte';
+	import * as Card from '#lib/components/ui/card/index.js';
+
 	let { children } = $props();
 </script>
 
-<main>
-	<p class="brand">Ticketbox</p>
-	<div class="card">{@render children()}</div>
+<main class="mx-auto flex min-h-svh max-w-sm flex-col justify-center gap-6 px-4">
+	<p class="flex items-center justify-center gap-2 text-lg font-semibold">
+		<Ticket class="size-5" /> Ticketbox
+	</p>
+	<Card.Root>{@render children()}</Card.Root>
 </main>
-
-<style>
-	main { max-width: 380px; margin: 10vh auto; padding: 0 16px; }
-	.brand { font-weight: 700; font-size: 1.25rem; text-align: center; }
-</style>

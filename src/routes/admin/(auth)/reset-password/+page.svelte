@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { authClient, authErrorMessage } from '#lib/auth-client.ts';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 	import { onMount } from 'svelte';
 
 	// Better Auth validates the emailed link and redirects here with ?token=… or ?error=INVALID_TOKEN.
@@ -35,18 +40,32 @@
 	}
 </script>
 
-<h1>Choose a new password</h1>
-{#if done}
-	<p class="notice" role="status">Your password was changed.</p>
-	<a href="/admin/login">Sign in</a>
-{:else if linkInvalid}
-	<p class="error" role="alert">This reset link is invalid or has expired.</p>
-	<a href="/admin/forgot-password">Request a new link</a>
-{:else}
-	<form class="stack" onsubmit={submit}>
-		<label>New password <input bind:value={password} type="password" autocomplete="new-password" required minlength="8" /></label>
-		<label>Repeat password <input bind:value={confirm} type="password" autocomplete="new-password" required /></label>
-		{#if error}<p class="error" role="alert">{error}</p>{/if}
-		<button type="submit" disabled={!ready || pending}>Save password</button>
-	</form>
-{/if}
+<Card.Header>
+	<Card.Title><h1 class="text-xl">Choose a new password</h1></Card.Title>
+</Card.Header>
+<Card.Content class="grid gap-4">
+	{#if done}
+		<Alert.Root role="status"><Alert.Description>Your password was changed.</Alert.Description></Alert.Root>
+		<Button href="/admin/login" class="w-full">Sign in</Button>
+	{:else if linkInvalid}
+		<Alert.Root variant="destructive">
+			<Alert.Description>This reset link is invalid or has expired.</Alert.Description>
+		</Alert.Root>
+		<Button href="/admin/forgot-password" variant="link" class="justify-self-center">Request a new link</Button>
+	{:else}
+		<form class="grid gap-4" onsubmit={submit}>
+			<div class="grid gap-2">
+				<Label for="password">New password</Label>
+				<Input id="password" bind:value={password} type="password" autocomplete="new-password" required minlength={8} />
+			</div>
+			<div class="grid gap-2">
+				<Label for="confirm">Repeat password</Label>
+				<Input id="confirm" bind:value={confirm} type="password" autocomplete="new-password" required />
+			</div>
+			{#if error}
+				<Alert.Root variant="destructive"><Alert.Description>{error}</Alert.Description></Alert.Root>
+			{/if}
+			<Button type="submit" class="w-full" disabled={!ready || pending}>Save password</Button>
+		</form>
+	{/if}
+</Card.Content>
