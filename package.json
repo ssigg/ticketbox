@@ -7,8 +7,8 @@
 		"dev": "vite dev --port 5180 --strictPort",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"prepare": "npm run i18n:compile && svelte-kit sync || echo ''",
+		"check": "npm run i18n:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"db:up": "docker compose up -d --wait",
 		"db:down": "docker compose down",
@@ -17,10 +17,12 @@
 		"db:seed": "tsx scripts/seed.ts",
 		"db:studio": "drizzle-kit studio",
 		"test": "npm run test:integration && npm run test:e2e",
-		"test:integration": "vitest run",
-		"test:e2e": "playwright test"
+		"test:integration": "npm run i18n:compile && vitest run",
+		"test:e2e": "playwright test",
+		"i18n:compile": "paraglide-js compile --outdir ./src/lib/paraglide --strategy cookie preferredLanguage baseLocale"
 	},
 	"devDependencies": {
+		"@inlang/paraglide-js": "^2.29.3",
 		"@internationalized/date": "^3.12.4",
 		"@lucide/svelte": "^1.66.0",
 		"@playwright/test": "^1.64.1",

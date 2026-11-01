@@ -51,6 +51,16 @@ Edit `src/lib/server/db/schema.ts`, then `npm run db:generate` and `npm run db:m
   all sessions are revoked on reset.
 - `BETTER_AUTH_SECRET` must be set (`openssl rand -base64 32`).
 
+## Internationalization
+
+[Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Messages live in `messages/{locale}.json`
+(English is the base locale, German is complete). Use them as `m.key()` from `#lib/paraglide/messages.js`.
+
+- Locale: `PARAGLIDE_LOCALE` cookie (set by the language switcher), else `Accept-Language`, else English.
+  A cookie rather than localStorage so server-rendered pages and emails use the right language.
+- `src/lib/paraglide` is generated (`npm run i18n:compile`, also run by `npm install`, `check` and the Vite plugin).
+- To add a language, add it to `project.inlang/settings.json` and create `messages/<locale>.json`.
+
 ## Configuration
 
 `ORIGIN` is read at **build time** (`paths.origin`) — SvelteKit 3's Node adapter no longer reads it at runtime and otherwise assumes `https`, which breaks form submissions behind plain http.

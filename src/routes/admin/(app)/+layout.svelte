@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { LogOut, Ticket } from '@lucide/svelte';
 	import { authClient } from '#lib/auth-client.ts';
+	import LanguageSwitcher from '#lib/components/language-switcher.svelte';
 	import ModeToggle from '#lib/components/mode-toggle.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import type { LayoutProps } from './$types';
@@ -23,8 +25,9 @@
 			{#if current}<span class="text-muted-foreground">/ {current.name}</span>{/if}
 			<span class="flex-1"></span>
 			<span class="hidden text-sm text-muted-foreground sm:inline" data-testid="current-user">{data.user.name}</span>
+			<LanguageSwitcher />
 			<ModeToggle />
-			<Button variant="ghost" size="sm" onclick={signOut}><LogOut /> Sign out</Button>
+			<Button variant="ghost" size="sm" onclick={signOut}><LogOut /> {m.sign_out()}</Button>
 		</div>
 	</header>
 	<main class="mx-auto max-w-6xl px-4 py-6">{@render children()}</main>

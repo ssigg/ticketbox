@@ -5,6 +5,7 @@ import { db } from './db';
 import * as schema from './db/schema';
 import { env } from './env';
 import { sendPasswordResetMail } from './mail';
+import { extractLocaleFromRequest } from '../paraglide/runtime.js';
 
 /**
  * Set by hooks.server.ts from SvelteKit's getClientAddress() (which honours adapter-node's
@@ -30,8 +31,10 @@ export const auth = betterAuth({
 		// Merchant users are created by admins (and the seed script), never by self sign-up.
 		disableSignUp: true,
 		revokeSessionsOnPasswordReset: true,
-		sendResetPassword: async ({ user, url }) => {
-			await sendPasswordResetMail(user.email, url);
+		sendResetPassword: async ({ user, url }, request) => {
+			// Same negotiation as the UI: language cookie, then Accept-Language.
+			const locale = request ? extractLocaleFromRequest(request) : undefined;
+			await sendPasswordResetMail(user.email, url, locale);
 		}
 	},
 	user: {

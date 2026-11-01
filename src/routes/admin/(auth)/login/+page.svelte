@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authClient, authErrorMessage } from '#lib/auth-client.ts';
@@ -28,7 +29,7 @@
 		const result = await authClient.signIn.email({ email, password });
 		pending = false;
 		if (result.error) {
-			error = authErrorMessage(result.error, 'Invalid email or password.');
+			error = authErrorMessage(result.error, m.invalid_credentials());
 			return;
 		}
 		await invalidateAll();
@@ -37,20 +38,20 @@
 </script>
 
 <Card.Header>
-	<Card.Title><h1 class="text-xl">Sign in</h1></Card.Title>
-	<Card.Description>Administration for organizers</Card.Description>
+	<Card.Title><h1 class="text-xl">{m.sign_in()}</h1></Card.Title>
+	<Card.Description>{m.sign_in_description()}</Card.Description>
 </Card.Header>
 <Card.Content>
 	<form class="grid gap-4" onsubmit={submit}>
 		<div class="grid gap-2">
-			<Label for="email">Email</Label>
+			<Label for="email">{m.email()}</Label>
 			<Input id="email" bind:value={email} type="email" autocomplete="username" required />
 		</div>
 		<div class="grid gap-2">
 			<div class="flex items-center justify-between">
-				<Label for="password">Password</Label>
+				<Label for="password">{m.password()}</Label>
 				<a href="/admin/forgot-password" class="text-sm text-muted-foreground underline-offset-4 hover:underline">
-					Forgot password?
+					{m.forgot_password()}
 				</a>
 			</div>
 			<Input id="password" bind:value={password} type="password" autocomplete="current-password" required />
@@ -58,6 +59,6 @@
 		{#if error}
 			<Alert.Root variant="destructive"><Alert.Description>{error}</Alert.Description></Alert.Root>
 		{/if}
-		<Button type="submit" class="w-full" disabled={!ready || pending}>Sign in</Button>
+		<Button type="submit" class="w-full" disabled={!ready || pending}>{m.sign_in()}</Button>
 	</form>
 </Card.Content>

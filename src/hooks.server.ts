@@ -1,11 +1,22 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
+import { sequence } from '@sveltejs/kit/hooks';
 import { isAuthPath } from 'better-auth/svelte-kit';
 import { CLIENT_IP_HEADER, auth } from '#lib/server/auth.ts';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
 
 const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/forgot-password', '/admin/reset-password'];
 
-export const handle: Handle = async ({ event, resolve }) => {
+// Locale: PARAGLIDE_LOCALE cookie (set by the language switcher), else Accept-Language, else English.
+const i18n: Handle = ({ event, resolve }) =>
+	// No URL-based locales, so the request passes through unchanged (event.request is read-only).
+	paraglideMiddleware(event.request, ({ locale }) =>
+		resolve(event, {
+			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
+		})
+	);
+
+const authentication: Handle = async ({ event, resolve }) => {
 	if (isAuthPath(event.url.toString(), auth.options)) {
 		// Replace any client-sent value so the rate limiter keys on the real address.
 		const headers = new Headers(event.request.headers);
@@ -31,3 +42,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 	return response;
 };
+
+export const handle = sequence(i18n, authentication);
