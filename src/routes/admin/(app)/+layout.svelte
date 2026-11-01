@@ -1,9 +1,16 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { authClient } from '#lib/auth-client.ts';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
 	const current = $derived(data.tenants.find((t) => t.slug === page.params.tenant));
+
+	async function signOut() {
+		await authClient.signOut();
+		await goto('/admin/login', { invalidateAll: true });
+	}
 </script>
 
 <header>
@@ -11,9 +18,7 @@
 	{#if current}<span class="tenant">/ {current.name}</span>{/if}
 	<span class="spacer"></span>
 	<span class="muted" data-testid="current-user">{data.user.name}</span>
-	<form method="POST" action="/admin/logout">
-		<button class="link" type="submit">Sign out</button>
-	</form>
+	<button class="link" type="button" onclick={signOut}>Sign out</button>
 </header>
 
 <main>{@render children()}</main>

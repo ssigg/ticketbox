@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from '../../src/lib/server/db';
-import { memberships, tenants, users, type Role } from '../../src/lib/server/db/schema';
-import { hashPassword } from '../../src/lib/server/auth';
+import { memberships, tenants, type Role } from '../../src/lib/server/db/schema';
+import { createUserWithPassword } from '../../src/lib/server/auth';
 
 /** Drops everything in the test database and re-applies all migrations. */
 export async function resetDatabase() {
@@ -19,17 +19,16 @@ export function uniqueEmail(prefix = 'user') {
 	return `${prefix}-${crypto.randomUUID().slice(0, 8)}@example.com`;
 }
 
-export async function createUser(opts: { email?: string; password?: string; name?: string; isSuperadmin?: boolean } = {}) {
+export async function createUser(
+	opts: { email?: string; password?: string; name?: string; isSuperadmin?: boolean } = {}
+) {
 	const password = opts.password ?? 'correct-horse';
-	const [user] = await db
-		.insert(users)
-		.values({
-			email: opts.email ?? uniqueEmail(),
-			name: opts.name ?? 'Test User',
-			passwordHash: await hashPassword(password),
-			isSuperadmin: opts.isSuperadmin ?? false
-		})
-		.returning();
+	const user = await createUserWithPassword({
+		email: opts.email ?? uniqueEmail(),
+		name: opts.name ?? 'Test User',
+		password,
+		isSuperadmin: opts.isSuperadmin
+	});
 	return { ...user, password };
 }
 

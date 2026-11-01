@@ -1,28 +1,21 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
-import {
-	SESSION_COOKIE,
-	invalidateSession,
-	sessionCookieOptions,
-	validateSession
-} from '#lib/server/auth.ts';
+import { isAuthPath } from 'better-auth/svelte-kit';
+import { CLIENT_IP_HEADER, auth } from '#lib/server/auth.ts';
 
 const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/forgot-password', '/admin/reset-password'];
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const token = event.cookies.get(SESSION_COOKIE);
-	event.locals.user = null;
-
-	if (token) {
-		const session = await validateSession(token);
-		if (session) {
-			event.locals.user = session.user;
-			event.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(session.expiresAt));
-		} else {
-			await invalidateSession(token);
-			event.cookies.delete(SESSION_COOKIE, { path: '/' });
-		}
+	if (isAuthPath(event.url.toString(), auth.options)) {
+		// Replace any client-sent value so the rate limiter keys on the real address.
+		const headers = new Headers(event.request.headers);
+		headers.set(CLIENT_IP_HEADER, event.getClientAddress());
+		return auth.handler(new Request(event.request, { headers, duplex: 'half' } as RequestInit));
 	}
+
+	const result = await auth.api.getSession({ headers: event.request.headers, returnHeaders: true });
+	event.locals.user = result.response?.user ?? null;
+	event.locals.session = result.response?.session ?? null;
 
 	const path = event.url.pathname;
 	const isAdmin = path === '/admin' || path.startsWith('/admin/');
@@ -31,5 +24,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 		redirect(303, `/admin/login?redirectTo=${encodeURIComponent(path + event.url.search)}`);
 	}
 
-	return resolve(event);
+	const response = await resolve(event);
+	// getSession refreshes the session cookie once per `updateAge`; pass that on.
+	for (const cookie of result.headers?.getSetCookie() ?? []) {
+		response.headers.append('set-cookie', cookie);
+	}
+	return response;
 };

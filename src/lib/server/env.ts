@@ -16,6 +16,7 @@ function required(name: string): string {
 
 export const env = {
 	databaseUrl: required('DATABASE_URL'),
+	authSecret: required('BETTER_AUTH_SECRET'),
 	smtpHost: process.env.SMTP_HOST ?? 'localhost',
 	smtpPort: Number(process.env.SMTP_PORT ?? 2501),
 	mailFrom: process.env.MAIL_FROM ?? 'ticketbox@localhost',

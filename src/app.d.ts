@@ -1,10 +1,13 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
-import type { SessionUser } from '#lib/server/auth.ts';
+import type { auth } from '#lib/server/auth.ts';
+
+type AuthSession = typeof auth.$Infer.Session;
 
 declare global {
 	namespace App {
 		interface Locals {
-			user: SessionUser | null;
+			user: AuthSession['user'] | null;
+			session: AuthSession['session'] | null;
 		}
 	}
 }

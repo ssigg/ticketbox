@@ -39,6 +39,18 @@ Both suites reset the test database (`ticketbox_test`) and apply migrations firs
 
 Edit `src/lib/server/db/schema.ts`, then `npm run db:generate` and `npm run db:migrate`.
 
+## Authentication
+
+[Better Auth](https://www.better-auth.com) with email/password, configured in `src/lib/server/auth.ts`:
+
+- Self sign-up is disabled; users are created with `createUserWithPassword` (seed script, later the admin UI).
+- Rate limiting is on in every environment and stored in Postgres (sign-in: 3 tries per 10 s per IP).
+  The client IP comes from SvelteKit's `getClientAddress()`; behind a proxy set adapter-node's
+  `ADDRESS_HEADER` / `XFF_DEPTH`.
+- Password reset links go through `/api/auth/reset-password/:token` and land on `/admin/reset-password`;
+  all sessions are revoked on reset.
+- `BETTER_AUTH_SECRET` must be set (`openssl rand -base64 32`).
+
 ## Configuration
 
 `ORIGIN` is read at **build time** (`paths.origin`) — SvelteKit 3's Node adapter no longer reads it at runtime and otherwise assumes `https`, which breaks form submissions behind plain http.

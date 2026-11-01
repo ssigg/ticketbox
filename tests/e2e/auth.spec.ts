@@ -65,3 +65,21 @@ test('resets the password via email link', async ({ page, user }) => {
 	await login(page, user.email, 'brand-new-pass');
 	await expect(page.getByRole('heading', { name: 'Organizers' })).toBeVisible();
 });
+
+test('rejects an invalid reset link', async ({ page }) => {
+	await page.goto('/api/auth/reset-password/not-a-real-token?callbackURL=%2Fadmin%2Freset-password');
+	await expect(page).toHaveURL(/\/admin\/reset-password\?error=INVALID_TOKEN/);
+	await expect(page.getByRole('alert')).toHaveText('This reset link is invalid or has expired.');
+});
+
+test('tells the user when login attempts are rate limited', async ({ page, user }) => {
+	await page.goto('/admin/login');
+	await page.getByLabel('Email').fill(user.email);
+	await page.getByLabel('Password').fill('wrong-password');
+	for (let i = 0; i < 3; i++) {
+		await page.getByRole('button', { name: 'Sign in' }).click();
+		await expect(page.getByRole('alert')).toHaveText('Invalid email or password.');
+	}
+	await page.getByRole('button', { name: 'Sign in' }).click();
+	await expect(page.getByRole('alert')).toHaveText(/Too many attempts/);
+});

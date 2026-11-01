@@ -19,8 +19,7 @@ export async function sendMail(mail: Mail): Promise<void> {
 	await transport.sendMail({ from: env.mailFrom, ...mail });
 }
 
-export async function sendPasswordResetMail(to: string, token: string): Promise<void> {
-	const link = `${env.origin}/admin/reset-password/${token}`;
+export async function sendPasswordResetMail(to: string, link: string): Promise<void> {
 	await sendMail({
 		to,
 		subject: 'Reset your Ticketbox password',
