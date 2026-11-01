@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { LogOut, Ticket } from '@lucide/svelte';
 	import { authClient } from '#lib/auth-client.ts';
+	import ModeToggle from '#lib/components/mode-toggle.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import type { LayoutProps } from './$types';
 
@@ -22,6 +23,7 @@
 			{#if current}<span class="text-muted-foreground">/ {current.name}</span>{/if}
 			<span class="flex-1"></span>
 			<span class="hidden text-sm text-muted-foreground sm:inline" data-testid="current-user">{data.user.name}</span>
+			<ModeToggle />
 			<Button variant="ghost" size="sm" onclick={signOut}><LogOut /> Sign out</Button>
 		</div>
 	</header>
