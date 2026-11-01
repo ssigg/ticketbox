@@ -1,0 +1,44 @@
+name: ticketbox
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ticketbox
+      POSTGRES_PASSWORD: ticketbox
+      POSTGRES_DB: ticketbox
+    ports:
+      - '54321:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ticketbox']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  # Throwaway database for integration and e2e tests; kept in RAM for speed.
+  db-test:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ticketbox
+      POSTGRES_PASSWORD: ticketbox
+      POSTGRES_DB: ticketbox_test
+    ports:
+      - '54322:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ticketbox']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  inbucket:
+    image: inbucket/inbucket:latest
+    ports:
+      - '9001:9000' # web UI + REST API
+      - '2501:2500' # SMTP
+
+volumes:
+  db-data:
