@@ -20,7 +20,7 @@
 
 	function redirectTarget() {
 		const target = page.url.searchParams.get('redirectTo');
-		return target?.startsWith('/admin') && !target.startsWith('//') ? target : '/admin';
+		return target?.startsWith('/admin') && !target.startsWith('//') ? target : '/admin/organizers';
 	}
 
 	async function submit(e: SubmitEvent) {

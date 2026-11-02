@@ -1,4 +1,6 @@
-import { createTenant } from '../helpers/db';
+import { db } from '../../src/lib/server/db';
+import { tenants } from '../../src/lib/server/db/schema';
+import { addMembership, createTenant } from '../helpers/db';
 import { extractLink, waitForMail } from '../helpers/inbucket';
 import { expect, login, test } from './fixtures';
 
@@ -29,11 +31,11 @@ test('shows an error for wrong credentials', async ({ page, user }) => {
 });
 
 test('returns to the originally requested page after login', async ({ page, user, tenant }) => {
-	await page.goto(`/admin/${tenant.slug}`);
+	await page.goto(`/admin/organizers/${tenant.slug}`);
 	await page.getByLabel('Email').fill(user.email);
 	await page.getByLabel('Password').fill(user.password);
 	await page.getByRole('button', { name: 'Sign in' }).click();
-	await expect(page).toHaveURL(new RegExp(`/admin/${tenant.slug}$`));
+	await expect(page).toHaveURL(new RegExp(`/admin/organizers/${tenant.slug}$`));
 });
 
 test('hides organizers the user is not a member of', async ({ page, user }) => {
@@ -42,7 +44,7 @@ test('hides organizers the user is not a member of', async ({ page, user }) => {
 	await expect(page.getByRole('heading', { name: 'Organizers' })).toBeVisible();
 	await expect(page.getByText('Foreign Theater')).toHaveCount(0);
 
-	const response = await page.goto(`/admin/${foreign.slug}`);
+	const response = await page.goto(`/admin/organizers/${foreign.slug}`);
 	expect(response?.status()).toBe(404);
 });
 
@@ -82,4 +84,14 @@ test('tells the user when login attempts are rate limited', async ({ page, user 
 	}
 	await page.getByRole('button', { name: 'Sign in' }).click();
 	await expect(page.getByRole('alert')).toHaveText(/Too many attempts/);
+});
+
+test('organizer slugs cannot clash with other admin pages', async ({ page, user }) => {
+	const [tenant] = await db.insert(tenants).values({ name: 'Profile Theater', slug: 'profile' }).returning();
+	await addMembership(user.id, tenant.id, 'owner');
+
+	await login(page, user.email, user.password);
+	await page.getByRole('link', { name: /Profile Theater/ }).click();
+	await expect(page).toHaveURL(/\/admin\/organizers\/profile$/);
+	await expect(page.getByRole('heading', { name: 'Profile Theater' })).toBeVisible();
 });

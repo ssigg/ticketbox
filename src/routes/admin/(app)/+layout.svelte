@@ -21,7 +21,7 @@
 <div class="min-h-svh bg-muted/40">
 	<header class="border-b bg-background">
 		<div class="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-			<a href="/admin" class="flex items-center gap-2 font-semibold"><Ticket class="size-5" /> Ticketbox</a>
+			<a href="/admin/organizers" class="flex items-center gap-2 font-semibold"><Ticket class="size-5" /> Ticketbox</a>
 			{#if current}<span class="text-muted-foreground">/ {current.name}</span>{/if}
 			<span class="flex-1"></span>
 			<Button href="/admin/profile" variant="ghost" size="sm" title={m.profile()}>

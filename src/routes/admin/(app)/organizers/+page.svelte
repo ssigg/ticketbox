@@ -16,7 +16,7 @@
 	<ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 		{#each data.tenants as tenant (tenant.id)}
 			<li>
-				<a href="/admin/{tenant.slug}" class="group block">
+				<a href="/admin/organizers/{tenant.slug}" class="group block">
 					<Card.Root class="transition-colors group-hover:bg-accent">
 						<Card.Header>
 							<Card.Title>{tenant.name}</Card.Title>
