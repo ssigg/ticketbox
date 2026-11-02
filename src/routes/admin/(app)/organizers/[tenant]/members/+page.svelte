@@ -9,6 +9,8 @@
 
 	let { data, form }: PageProps = $props();
 
+	const ownerCount = $derived(data.members.filter((x) => x.role === 'owner').length);
+
 	// Feedback for the last action; invite validation errors are shown inside the dialog instead.
 	const feedback = $derived.by((): { ok: boolean; text: string } | null => {
 		if (!form) return null;
@@ -48,7 +50,12 @@
 		</Table.Header>
 		<Table.Body>
 			{#each data.members as member (member.userId)}
-				<MemberRow {member} organizer={data.tenant.name} isSelf={member.userId === data.user.id} />
+				<MemberRow
+					{member}
+					organizer={data.tenant.name}
+					isSelf={member.userId === data.user.id}
+					isLastOwner={member.role === 'owner' && ownerCount === 1}
+				/>
 			{/each}
 		</Table.Body>
 	</Table.Root>

@@ -42,11 +42,27 @@ test('owners change roles and remove members, but keep the last owner', async ({
 	await expect(page.getByRole('heading', { name: 'Organizers' })).toBeVisible();
 	await page.goto(`/admin/organizers/${tenant.slug}/members`);
 
-	// Demoting yourself as the only owner is refused.
-	await page.getByRole('combobox', { name: 'Role: Erika Muster' }).click();
-	await page.getByRole('option', { name: 'Box office' }).click();
-	await expect(page.getByRole('alert')).toHaveText('An organizer needs at least one owner.');
-	await expect(page.getByRole('combobox', { name: 'Role: Erika Muster' })).toHaveText('Owner');
+	// The only owner can be neither demoted nor removed: the controls are disabled…
+	await expect(page.getByRole('combobox', { name: 'Role: Erika Muster' })).toBeDisabled();
+	await expect(page.getByRole('button', { name: 'Remove: Erika Muster' })).toBeDisabled();
+	await expect(page.getByRole('button', { name: 'Remove: Colin Colleague' })).toBeEnabled();
+	// …and the server refuses it anyway.
+	for (const [action, form] of [
+		['remove', { userId: user.id }],
+		['changeRole', { userId: user.id, role: 'admin' }]
+	] as const) {
+		const res = await page.request.post(`/admin/organizers/${tenant.slug}/members?/${action}`, {
+			form,
+			headers: { origin: 'http://localhost:4180', accept: 'application/json' }
+		});
+		expect(await res.json()).toMatchObject({ type: 'failure', status: 400 });
+	}
+
+	// With a second owner, the first one can be demoted again.
+	await page.getByRole('combobox', { name: 'Role: Colin Colleague' }).click();
+	await page.getByRole('option', { name: 'Owner' }).click();
+	await expect(page.getByRole('status')).toHaveText('Role of Colin Colleague changed.');
+	await expect(page.getByRole('combobox', { name: 'Role: Erika Muster' })).toBeEnabled();
 
 	await page.getByRole('combobox', { name: 'Role: Colin Colleague' }).click();
 	await page.getByRole('option', { name: 'Box office' }).click();

@@ -14,8 +14,12 @@
 		member: { userId: string; name: string; email: string; role: Role; invitationPending: boolean };
 		organizer: string;
 		isSelf: boolean;
+		/** The only owner can neither be demoted nor removed (the server refuses it too). */
+		isLastOwner: boolean;
 	}
-	let { member, organizer, isSelf }: Props = $props();
+	let { member, organizer, isSelf, isLastOwner }: Props = $props();
+	// Disabled controls don't show their own tooltip, so the reason sits on a wrapper.
+	const lockedReason = $derived(isLastOwner ? m.last_owner() : undefined);
 
 	let roleForm: HTMLFormElement;
 	// Writable derived: follows the stored role and can be changed locally by the select.
@@ -47,14 +51,16 @@
 		}}>
 			<input type="hidden" name="userId" value={member.userId} />
 			<input type="hidden" name="role" value={role} />
-			<Select.Root type="single" bind:value={role} onValueChange={submitRole}>
-				<Select.Trigger class="w-36" aria-label={`${m.role()}: ${member.name}`}>{roleLabel[role]()}</Select.Trigger>
-				<Select.Content>
-					{#each ROLES as r (r)}
-						<Select.Item value={r} label={roleLabel[r]()} />
-					{/each}
-				</Select.Content>
-			</Select.Root>
+			<span class="inline-block" title={lockedReason}>
+				<Select.Root type="single" bind:value={role} onValueChange={submitRole} disabled={isLastOwner}>
+					<Select.Trigger class="w-36" aria-label={`${m.role()}: ${member.name}`}>{roleLabel[role]()}</Select.Trigger>
+					<Select.Content>
+						{#each ROLES as r (r)}
+							<Select.Item value={r} label={roleLabel[r]()} />
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</span>
 		</form>
 	</Table.Cell>
 	<Table.Cell class="text-right">
@@ -68,13 +74,15 @@
 				</form>
 			{/if}
 			<AlertDialog.Root>
-				<AlertDialog.Trigger
-					class={buttonVariants({ variant: 'ghost', size: 'icon-sm' })}
-					aria-label={`${m.remove()}: ${member.name}`}
-					title={m.remove()}
-				>
-					<Trash2 />
-				</AlertDialog.Trigger>
+				<span class="inline-block" title={lockedReason ?? m.remove()}>
+					<AlertDialog.Trigger
+						class={buttonVariants({ variant: 'ghost', size: 'icon-sm' })}
+						aria-label={`${m.remove()}: ${member.name}`}
+						disabled={isLastOwner}
+					>
+						<Trash2 />
+					</AlertDialog.Trigger>
+				</span>
 				<AlertDialog.Content>
 					<AlertDialog.Header>
 						<AlertDialog.Title>{m.remove_member_confirm({ name: member.name, organizer })}</AlertDialog.Title>
