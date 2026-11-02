@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { eq } from 'drizzle-orm';
@@ -35,6 +36,12 @@ export const auth = betterAuth({
 			// Same negotiation as the UI: language cookie, then Accept-Language.
 			const locale = request ? extractLocaleFromRequest(request) : undefined;
 			await sendPasswordResetMail(user.email, url, locale);
+		},
+		// Setting a password via the emailed link proves the address; it also marks invitations as accepted.
+		onPasswordReset: async ({ user }) => {
+			if (!user.emailVerified) {
+				await db.update(schema.users).set({ emailVerified: true }).where(eq(schema.users.id, user.id));
+			}
 		}
 	},
 	user: {
@@ -60,18 +67,22 @@ export const auth = betterAuth({
 
 export type SessionUser = typeof auth.$Infer.Session.user;
 
-/** Creates a user with an email/password account. Self sign-up is disabled, so this bypasses the API. */
+/**
+ * Creates a user with an email/password account. Self sign-up is disabled, so this bypasses the API.
+ * Invited users start with `emailVerified: false` and a random password until they set their own.
+ */
 export async function createUserWithPassword(input: {
 	email: string;
 	name: string;
 	password: string;
 	isSuperadmin?: boolean;
+	emailVerified?: boolean;
 }) {
 	const ctx = await auth.$context;
 	const user = await ctx.internalAdapter.createUser({
 		email: input.email.trim().toLowerCase(),
 		name: input.name,
-		emailVerified: true,
+		emailVerified: input.emailVerified ?? true,
 		isSuperadmin: input.isSuperadmin ?? false
 	}, { method: 'email-password' });
 	await ctx.internalAdapter.linkAccount({
@@ -81,6 +92,22 @@ export async function createUserWithPassword(input: {
 		password: await ctx.password.hash(input.password)
 	});
 	return user;
+}
+
+/**
+ * A link that lets the user choose a password, using Better Auth's reset-password tokens
+ * (same storage and flow as "Forgot password", but with a longer lifetime for invitations).
+ */
+export async function createPasswordSetupUrl(userId: string, ttlSeconds: number): Promise<string> {
+	const ctx = await auth.$context;
+	const token = randomBytes(18).toString('base64url');
+	await ctx.internalAdapter.createVerificationValue({
+		identifier: `reset-password:${token}`,
+		value: userId,
+		expiresAt: new Date(Date.now() + ttlSeconds * 1000)
+	});
+	const callbackURL = encodeURIComponent(`${env.origin}/admin/reset-password`);
+	return `${ctx.baseURL}/reset-password/${token}?callbackURL=${callbackURL}`;
 }
 
 /** Tenants the user may administer; superadmins see all of them. */

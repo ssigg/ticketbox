@@ -28,3 +28,26 @@ export async function sendPasswordResetMail(to: string, link: string, locale?: L
 		text: m.reset_mail_body({ link }, { locale })
 	});
 }
+
+interface MembershipMail {
+	organizer: string;
+	invitedBy: string;
+	link: string;
+	locale?: Locale;
+}
+
+export async function sendInvitationMail(to: string, { organizer, invitedBy, link, locale }: MembershipMail) {
+	await sendMail({
+		to,
+		subject: m.invitation_mail_subject({ organizer }, { locale }),
+		text: m.invitation_mail_body({ organizer, invitedBy, link }, { locale })
+	});
+}
+
+export async function sendMembershipAddedMail(to: string, { organizer, invitedBy, link, locale }: MembershipMail) {
+	await sendMail({
+		to,
+		subject: m.membership_added_mail_subject({ organizer }, { locale }),
+		text: m.membership_added_mail_body({ organizer, invitedBy, link }, { locale })
+	});
+}
