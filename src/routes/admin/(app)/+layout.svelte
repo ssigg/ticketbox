@@ -2,7 +2,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { LogOut, Ticket } from '@lucide/svelte';
+	import { LogOut, Ticket, UserRound } from '@lucide/svelte';
 	import { authClient } from '#lib/auth-client.ts';
 	import LanguageSwitcher from '#lib/components/language-switcher.svelte';
 	import ModeToggle from '#lib/components/mode-toggle.svelte';
@@ -24,7 +24,11 @@
 			<a href="/admin" class="flex items-center gap-2 font-semibold"><Ticket class="size-5" /> Ticketbox</a>
 			{#if current}<span class="text-muted-foreground">/ {current.name}</span>{/if}
 			<span class="flex-1"></span>
-			<span class="hidden text-sm text-muted-foreground sm:inline" data-testid="current-user">{data.user.name}</span>
+			<Button href="/admin/profile" variant="ghost" size="sm" title={m.profile()}>
+				<UserRound />
+				<span class="hidden sm:inline" data-testid="current-user">{data.user.name}</span>
+				<span class="sr-only sm:hidden">{m.profile()}</span>
+			</Button>
 			<LanguageSwitcher />
 			<ModeToggle />
 			<Button variant="ghost" size="sm" onclick={signOut}><LogOut /> {m.sign_out()}</Button>

@@ -34,5 +34,12 @@
 	"language": "Language",
 	"reset_mail_subject": "Reset your Ticketbox password",
 	"reset_mail_body": "Use this link to set a new password (valid for 1 hour):\n\n{link}\n\nIf you did not request this, ignore this email.",
-	"not_found": "Not found"
+	"not_found": "Not found",
+	"profile": "Profile",
+	"account": "Account",
+	"name": "Name",
+	"change_password": "Change password",
+	"change_password_hint": "You will be signed out on all other devices.",
+	"current_password": "Current password",
+	"wrong_current_password": "The current password is incorrect."
 }

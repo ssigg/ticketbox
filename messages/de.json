@@ -34,5 +34,12 @@
 	"language": "Sprache",
 	"reset_mail_subject": "Ticketbox-Passwort zurücksetzen",
 	"reset_mail_body": "Mit diesem Link können Sie ein neues Passwort festlegen (1 Stunde gültig):\n\n{link}\n\nFalls Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.",
-	"not_found": "Nicht gefunden"
+	"not_found": "Nicht gefunden",
+	"profile": "Profil",
+	"account": "Konto",
+	"name": "Name",
+	"change_password": "Passwort ändern",
+	"change_password_hint": "Sie werden auf allen anderen Geräten abgemeldet.",
+	"current_password": "Aktuelles Passwort",
+	"wrong_current_password": "Das aktuelle Passwort ist falsch."
 }
