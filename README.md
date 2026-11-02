@@ -49,6 +49,8 @@ Edit `src/lib/server/db/schema.ts`, then `npm run db:generate` and `npm run db:m
   `ADDRESS_HEADER` / `XFF_DEPTH`.
 - Password reset links go through `/api/auth/reset-password/:token` and land on `/admin/reset-password`;
   all sessions are revoked on reset.
+- Superadmins (`users.is_superadmin`) see every organizer and can create organizers. Create or promote one with
+  `npm run user:superadmin -- <email> [name]` (password from `SUPERADMIN_PASSWORD`, otherwise a random one is printed).
 - `BETTER_AUTH_SECRET` must be set (`openssl rand -base64 32`).
 
 ## Internationalization

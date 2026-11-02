@@ -41,5 +41,15 @@
 	"change_password": "Change password",
 	"change_password_hint": "You will be signed out on all other devices.",
 	"current_password": "Current password",
-	"wrong_current_password": "The current password is incorrect."
+	"wrong_current_password": "The current password is incorrect.",
+	"new_organizer": "New organizer",
+	"new_organizer_description": "Creates an organizer. You can add users to it afterwards.",
+	"slug": "Address (slug)",
+	"default_language": "Default language",
+	"currency": "Currency",
+	"create": "Create",
+	"slug_taken": "This address is already taken.",
+	"check_input": "Please check your input.",
+	"superadmin": "Superadmin",
+	"forbidden": "You are not allowed to do this."
 }

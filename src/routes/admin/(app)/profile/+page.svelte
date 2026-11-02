@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authClient, authErrorMessage } from '#lib/auth-client.ts';
 	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -59,6 +60,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title><h2>{m.account()}</h2></Card.Title>
+			{#if data.user.isSuperadmin}
+				<Card.Action><Badge variant="secondary">{m.superadmin()}</Badge></Card.Action>
+			{/if}
 		</Card.Header>
 		<Card.Content>
 			<dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

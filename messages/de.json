@@ -41,5 +41,15 @@
 	"change_password": "Passwort ändern",
 	"change_password_hint": "Sie werden auf allen anderen Geräten abgemeldet.",
 	"current_password": "Aktuelles Passwort",
-	"wrong_current_password": "Das aktuelle Passwort ist falsch."
+	"wrong_current_password": "Das aktuelle Passwort ist falsch.",
+	"new_organizer": "Neuer Veranstalter",
+	"new_organizer_description": "Erstellt einen Veranstalter. Benutzer können Sie danach hinzufügen.",
+	"slug": "Adresse (Slug)",
+	"default_language": "Standardsprache",
+	"currency": "Währung",
+	"create": "Erstellen",
+	"slug_taken": "Diese Adresse ist bereits vergeben.",
+	"check_input": "Bitte überprüfen Sie Ihre Eingaben.",
+	"superadmin": "Superadmin",
+	"forbidden": "Sie dürfen diese Aktion nicht ausführen."
 }
