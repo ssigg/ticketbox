@@ -87,7 +87,11 @@ test('assigns the seats of an event to categories', async ({ page, user, tenant 
 	await expect(page.getByRole('heading', { name: 'Organizers' })).toBeVisible();
 	await page.goto(`/admin/organizers/${tenant.slug}/events/${event.event.id}/seating`);
 	await expect(page.getByText('This event has no seat plan yet.')).toBeVisible();
-	await page.getByRole('combobox', { name: 'Seat plan' }).click();
+	// The dropdown only opens once the page is interactive; retry until it does.
+	await expect(async () => {
+		await page.getByRole('combobox', { name: 'Seat plan' }).click();
+		await expect(page.getByRole('option', { name: /Saal/ })).toBeVisible({ timeout: 1000 });
+	}).toPass();
 	await page.getByRole('option', { name: /Saal/ }).click();
 	await page.getByRole('button', { name: 'Use seat plan' }).click();
 

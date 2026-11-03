@@ -239,13 +239,16 @@
 	</div>
 	<!-- Converted plans sit on the card colour; originals (and photos) keep a white frame. -->
 	<div bind:this={scroller} class="max-h-[75vh] overflow-auto rounded-lg border {useConverted ? 'bg-card' : 'bg-white'}">
+		<!-- Focusable so its keyboard shortcuts (delete, move, select all) reach the editor. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<svg
 			bind:this={svg}
 			viewBox="0 0 {width} {height}"
 			width={zoom ? width * zoom : '100%'}
-			class="block touch-none select-none"
+			class="block touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
 			style:cursor
 			role="application"
+			tabindex="0"
 			aria-label={m.seat_plan()}
 			data-image={useConverted ? 'dark' : 'original'}
 			onpointerdown={down}
