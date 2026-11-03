@@ -1,6 +1,7 @@
 import {
 	bigint,
 	boolean,
+	check,
 	index,
 	integer,
 	jsonb,
@@ -12,6 +13,7 @@ import {
 	unique,
 	uuid
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 const timestamps = {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -137,6 +139,27 @@ export const events = pgTable(
 );
 
 export type Event = typeof events.$inferSelect;
+
+/** Price levels of an event; seats are assigned to them later in the seat plan. */
+export const categories = pgTable(
+	'categories',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		eventId: uuid('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		name: jsonb('name').$type<LocalizedText>().notNull(),
+		// In minor units (Rappen/cents) of the organizer's currency.
+		price: integer('price').notNull(),
+		// Hex colour used for the category's seats in the seat plan.
+		color: text('color').notNull(),
+		sortOrder: integer('sort_order').notNull().default(0),
+		...timestamps
+	},
+	(t) => [index().on(t.eventId), check('categories_price_not_negative', sql`${t.price} >= 0`)]
+);
+
+export type Category = typeof categories.$inferSelect;
 export type EventStatus = (typeof eventStatusEnum.enumValues)[number];
 export type Tenant = typeof tenants.$inferSelect;
 export type User = typeof users.$inferSelect;
