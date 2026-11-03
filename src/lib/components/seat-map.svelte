@@ -68,10 +68,49 @@
 	let zoom = $state(0);
 	const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 
-	function toImage(event: PointerEvent): MapPoint {
+	let scroller: HTMLDivElement;
+
+	function toImage(event: { clientX: number; clientY: number }): MapPoint {
 		const matrix = svg.getScreenCTM()!.inverse();
 		const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix);
 		return { x: Math.max(0, Math.min(width, p.x)), y: Math.max(0, Math.min(height, p.y)) };
+	}
+
+	// ── Scrolling while dragging ──
+	// Near or past an edge of the map (or the window), the plan scrolls, faster the further out the
+	// pointer is, and the drag continues as if the pointer had moved over the plan.
+	const EDGE = 48;
+	let lastPointer: PointerEvent | null = null;
+	let frame = 0;
+
+	function edgeSpeed(position: number, start: number, end: number) {
+		if (position < start + EDGE) return -Math.min(1, (start + EDGE - position) / (EDGE * 2));
+		if (position > end - EDGE) return Math.min(1, (position - end + EDGE) / (EDGE * 2));
+		return 0;
+	}
+
+	function autoScroll() {
+		if (!lastPointer) return;
+		const box = scroller.getBoundingClientRect();
+		// Limit the map's edges to what is on screen.
+		const top = Math.max(box.top, 0);
+		const bottom = Math.min(box.bottom, window.innerHeight);
+		const { clientX, clientY } = lastPointer;
+		const dx = edgeSpeed(clientX, box.left, box.right) * 24;
+		const dy = edgeSpeed(clientY, top, bottom) * 24;
+		const before = [scroller.scrollLeft, scroller.scrollTop, window.scrollX, window.scrollY];
+		scroller.scrollBy(dx, dy);
+		// What the map can't scroll any further, the page scrolls (the map may reach below the window).
+		if (scroller.scrollTop === before[1] && dy) window.scrollBy(0, dy);
+		if (scroller.scrollLeft === before[0] && dx) window.scrollBy(dx, 0);
+		const after = [scroller.scrollLeft, scroller.scrollTop, window.scrollX, window.scrollY];
+		if (after.some((v, i) => v !== before[i])) onmove?.(toImage(lastPointer), lastPointer);
+		frame = requestAnimationFrame(autoScroll);
+	}
+
+	function stopAutoScroll() {
+		lastPointer = null;
+		cancelAnimationFrame(frame);
 	}
 
 	function zoomBy(direction: 1 | -1) {
@@ -87,6 +126,19 @@
 		const point = toImage(event);
 		if (target) onseatdown?.(target.getAttribute('data-seat')!, point, event);
 		else onbackgrounddown?.(point, event);
+		lastPointer = event;
+		cancelAnimationFrame(frame);
+		frame = requestAnimationFrame(autoScroll);
+	}
+
+	function move(event: PointerEvent) {
+		if (lastPointer) lastPointer = event;
+		onmove?.(toImage(event), event);
+	}
+
+	function up(event: PointerEvent) {
+		stopAutoScroll();
+		onup?.(toImage(event), event);
 	}
 
 	const outline = (seat: MapSeat) =>
@@ -111,7 +163,7 @@
 		</Button>
 		{@render toolbar?.()}
 	</div>
-	<div class="max-h-[75vh] overflow-auto rounded-lg border bg-white">
+	<div bind:this={scroller} class="max-h-[75vh] overflow-auto rounded-lg border bg-white">
 		<svg
 			bind:this={svg}
 			viewBox="0 0 {width} {height}"
@@ -121,8 +173,10 @@
 			role="application"
 			aria-label={m.seat_plan()}
 			onpointerdown={down}
-			onpointermove={(e) => onmove?.(toImage(e), e)}
-			onpointerup={(e) => onup?.(toImage(e), e)}
+			onpointermove={move}
+			onpointerup={up}
+			onpointercancel={stopAutoScroll}
+			onlostpointercapture={stopAutoScroll}
 		>
 			<image href={imageUrl} {width} {height} />
 			{@render underlay?.()}
