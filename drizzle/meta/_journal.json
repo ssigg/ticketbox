@@ -43,6 +43,13 @@
       "when": 1793738056769,
       "tag": "0005_seat_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793740733530,
+      "tag": "0006_seat_plan_dark_mode",
+      "breakpoints": true
     }
   ]
 }

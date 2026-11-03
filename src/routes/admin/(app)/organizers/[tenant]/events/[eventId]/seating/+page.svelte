@@ -167,6 +167,7 @@
 			width={plan.width}
 			height={plan.height}
 			seats={mapSeats}
+			darkMode={plan.darkMode}
 			bind:showNumbers
 			cursor="crosshair"
 			onseatdown={(key) => paint([key])}
