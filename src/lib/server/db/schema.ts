@@ -160,6 +160,51 @@ export const categories = pgTable(
 );
 
 export type Category = typeof categories.$inferSelect;
+
+export const reductionKindEnum = pgEnum('reduction_kind', ['percent', 'absolute']);
+
+/**
+ * Lower prices for customer groups (students, seniors, …). Customers pick one per ticket;
+ * eligibility is checked by a person at the entrance.
+ */
+export const reductions = pgTable(
+	'reductions',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		eventId: uuid('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		name: jsonb('name').$type<LocalizedText>().notNull(),
+		kind: reductionKindEnum('kind').notNull(),
+		// percent: basis points (2000 = 20 %); absolute: minor units off the category price.
+		value: integer('value').notNull(),
+		// Otherwise only the categories in reduction_categories.
+		allCategories: boolean('all_categories').notNull().default(true),
+		sortOrder: integer('sort_order').notNull().default(0),
+		...timestamps
+	},
+	(t) => [
+		index().on(t.eventId),
+		check('reductions_value_positive', sql`${t.value} > 0`),
+		check('reductions_percent_max', sql`${t.kind} <> 'percent' or ${t.value} <= 10000`)
+	]
+);
+
+export const reductionCategories = pgTable(
+	'reduction_categories',
+	{
+		reductionId: uuid('reduction_id')
+			.notNull()
+			.references(() => reductions.id, { onDelete: 'cascade' }),
+		categoryId: uuid('category_id')
+			.notNull()
+			.references(() => categories.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.reductionId, t.categoryId] })]
+);
+
+export type Reduction = typeof reductions.$inferSelect;
+export type ReductionKind = (typeof reductionKindEnum.enumValues)[number];
 export type EventStatus = (typeof eventStatusEnum.enumValues)[number];
 export type Tenant = typeof tenants.$inferSelect;
 export type User = typeof users.$inferSelect;

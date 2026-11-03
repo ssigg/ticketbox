@@ -14,7 +14,8 @@
 	const title = $derived(localized(data.event.name, getLocale(), data.tenant.defaultLocale));
 	const tabs = $derived([
 		{ href: base, label: m.event_details() },
-		{ href: `${base}/categories`, label: m.categories() }
+		{ href: `${base}/categories`, label: m.categories() },
+		{ href: `${base}/reductions`, label: m.reductions() }
 	]);
 </script>
 

@@ -84,6 +84,16 @@ export function eventToForm(event: Event, timeZone: string): EventFormValues {
 	return values;
 }
 
+/** The event's id if it belongs to the organizer; queries on an event's parts go through this. */
+export async function ownedEventId(tenantId: string, eventId: string): Promise<string | null> {
+	if (!UUID.test(eventId)) return null;
+	const [event] = await db
+		.select({ id: events.id })
+		.from(events)
+		.where(and(eq(events.id, eventId), eq(events.tenantId, tenantId)));
+	return event?.id ?? null;
+}
+
 export function listEvents(tenantId: string) {
 	return db.select().from(events).where(eq(events.tenantId, tenantId)).orderBy(asc(events.startsAt));
 }

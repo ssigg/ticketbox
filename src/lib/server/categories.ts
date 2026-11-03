@@ -1,6 +1,7 @@
 import { and, asc, eq, max } from 'drizzle-orm';
 import { db } from './db';
-import { categories, events, type Category, type LocalizedText, type Tenant } from './db/schema';
+import { categories, type Category, type LocalizedText, type Tenant } from './db/schema';
+import { ownedEventId } from './events';
 import { CATEGORY_COLORS } from '../category-colors';
 import { parseMoney, toMoneyInput } from '../money';
 import { locales } from '../paraglide/runtime.js';
@@ -38,16 +39,6 @@ export function categoryToForm(category: Category): CategoryFormValues {
 	const values: CategoryFormValues = { price: toMoneyInput(category.price), color: category.color };
 	for (const locale of locales) values[`name.${locale}`] = category.name[locale] ?? '';
 	return values;
-}
-
-/** The event's id if it belongs to the organizer; every query below goes through this. */
-async function ownedEventId(tenantId: string, eventId: string): Promise<string | null> {
-	if (!UUID.test(eventId)) return null;
-	const [event] = await db
-		.select({ id: events.id })
-		.from(events)
-		.where(and(eq(events.id, eventId), eq(events.tenantId, tenantId)));
-	return event?.id ?? null;
 }
 
 export async function listCategories(tenantId: string, eventId: string): Promise<Category[]> {
