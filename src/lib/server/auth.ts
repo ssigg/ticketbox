@@ -124,6 +124,7 @@ export async function tenantsForUser(user: Pick<SessionUser, 'id' | 'isSuperadmi
 			name: tenants.name,
 			defaultLocale: tenants.defaultLocale,
 			currency: tenants.currency,
+			timezone: tenants.timezone,
 			createdAt: tenants.createdAt,
 			role: memberships.role
 		})

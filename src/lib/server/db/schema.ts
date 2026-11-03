@@ -1,4 +1,17 @@
-import { bigint, boolean, integer, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+	bigint,
+	boolean,
+	index,
+	integer,
+	jsonb,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+	unique,
+	uuid
+} from 'drizzle-orm/pg-core';
 
 const timestamps = {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -14,6 +27,8 @@ export const tenants = pgTable('tenants', {
 	name: text('name').notNull(),
 	defaultLocale: text('default_locale').notNull().default('de'),
 	currency: text('currency').notNull().default('CHF'),
+	// IANA zone; event times are entered and shown in it.
+	timezone: text('timezone').notNull().default('Europe/Zurich'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -92,6 +107,37 @@ export const memberships = pgTable(
 	(t) => [primaryKey({ columns: [t.userId, t.tenantId] })]
 );
 
+// ── Events ──
+
+/** Text per locale, e.g. { de: 'Konzert', en: 'Concert' }. */
+export type LocalizedText = Partial<Record<string, string>>;
+
+export const eventStatusEnum = pgEnum('event_status', ['draft', 'onsale', 'closed']);
+
+export const events = pgTable(
+	'events',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		// Used in the public shop URL, unique per organizer.
+		slug: text('slug').notNull(),
+		name: jsonb('name').$type<LocalizedText>().notNull(),
+		description: jsonb('description').$type<LocalizedText>().notNull().default({}),
+		venue: text('venue').notNull().default(''),
+		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+		// Null means: from publishing / until the event starts.
+		salesStart: timestamp('sales_start', { withTimezone: true }),
+		salesEnd: timestamp('sales_end', { withTimezone: true }),
+		status: eventStatusEnum('status').notNull().default('draft'),
+		...timestamps
+	},
+	(t) => [unique().on(t.tenantId, t.slug), index().on(t.tenantId, t.startsAt)]
+);
+
+export type Event = typeof events.$inferSelect;
+export type EventStatus = (typeof eventStatusEnum.enumValues)[number];
 export type Tenant = typeof tenants.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Role = (typeof roleEnum.enumValues)[number];

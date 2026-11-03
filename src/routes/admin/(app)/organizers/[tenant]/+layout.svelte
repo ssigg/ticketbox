@@ -9,6 +9,7 @@
 	const base = $derived(`/admin/organizers/${data.tenant.slug}`);
 	const tabs = $derived([
 		{ href: base, label: m.overview(), show: true },
+		{ href: `${base}/events`, label: m.events(), show: ['owner', 'admin'].includes(data.tenant.role) },
 		{ href: `${base}/members`, label: m.members(), show: data.tenant.role === 'owner' }
 	]);
 </script>
@@ -16,7 +17,7 @@
 <h1 class="mb-4 text-2xl font-semibold tracking-tight">{data.tenant.name}</h1>
 <nav class="mb-6 flex gap-1 border-b" aria-label={data.tenant.name}>
 	{#each tabs.filter((t) => t.show) as tab (tab.href)}
-		{@const active = page.url.pathname === tab.href}
+		{@const active = tab.href === base ? page.url.pathname === base : page.url.pathname.startsWith(tab.href)}
 		<a
 			href={tab.href}
 			aria-current={active ? 'page' : undefined}
