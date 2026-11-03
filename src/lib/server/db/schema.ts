@@ -130,7 +130,7 @@ export const seatPlans = pgTable('seat_plans', {
 	// Image size in pixels; seat coordinates are in the same space.
 	width: integer('width').notNull(),
 	height: integer('height').notNull(),
-	// Seat diameter in image pixels.
+	// Size of seats placed by hand, in image pixels.
 	seatSize: integer('seat_size').notNull().default(16),
 	...timestamps
 });
@@ -146,9 +146,12 @@ export const seats = pgTable(
 		section: text('section').notNull().default(''),
 		row: text('row').notNull().default(''),
 		number: text('number').notNull(),
-		// Centre of the seat in image pixels.
+		// The seat is a rectangle in image pixels: centre, size and rotation in degrees.
 		x: doublePrecision('x').notNull(),
-		y: doublePrecision('y').notNull()
+		y: doublePrecision('y').notNull(),
+		width: doublePrecision('width').notNull().default(16),
+		height: doublePrecision('height').notNull().default(16),
+		rotation: doublePrecision('rotation').notNull().default(0)
 	},
 	// The unique constraint is DEFERRABLE INITIALLY DEFERRED (edited in migration 0004) so saving a plan
 	// can swap labels between seats within one transaction.

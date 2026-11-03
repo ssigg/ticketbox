@@ -65,9 +65,19 @@ Edit `src/lib/server/db/schema.ts`, then `npm run db:generate` and `npm run db:m
 
 ## Seat plans
 
-Organizers upload a picture of a venue (PNG/JPEG/WebP, ≤ 5 MB, stored in Postgres) and place seats on it in the editor
-(single seats, whole rows, renumbering, moving). Events pick a plan and assign its seats to their price categories.
-Seat coordinates are image pixels. Uploads need `BODY_SIZE_LIMIT=6M` (adapter-node's default is 512 KB).
+Organizers upload a picture of a venue (PNG/JPEG/WebP, ≤ 5 MB, stored in Postgres). Seats are rotated rectangles in image
+pixels. Two ways to annotate a plan:
+
+- **Detect** (plans with drawn seat boxes): click one seat; boxes of similar size are found at any angle
+  (`src/lib/seat-detection/boxes.ts`), their numbers read with Tesseract (`ocr.ts`, three readings per box, majority
+  vote), and rows found by chaining neighbours, also across aisles and along curves (`rows.ts`). The review lists
+  duplicates, gaps and doubtful numbers with fixes suggested from the neighbours (`review.ts`). Users name the rows by
+  clicking them in order.
+- **Place by hand**: single seats, rows by dragging, renumbering.
+
+Tesseract's worker, core and English model are served by the app itself under `/ocr/` from `node_modules`.
+Events pick a plan and assign its seats to their price categories. Uploads need `BODY_SIZE_LIMIT=6M`
+(adapter-node's default is 512 KB).
 
 ## Configuration
 

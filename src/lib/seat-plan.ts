@@ -12,7 +12,14 @@ export interface SeatLabel {
 	number: string;
 }
 
-export type PlanSeat = SeatPosition & SeatLabel;
+export interface SeatShape {
+	width: number;
+	height: number;
+	/** Degrees, clockwise. */
+	rotation: number;
+}
+
+export type PlanSeat = SeatPosition & SeatLabel & SeatShape;
 
 export interface Rect {
 	x1: number;
@@ -22,16 +29,19 @@ export interface Rect {
 }
 
 /**
- * `count` seats evenly spaced from `start` to `end` (both included), numbered from `firstNumber`
- * in steps of `step` — e.g. step 2 for theatres that number odd seats on one side.
+ * `count` square seats of `size` evenly spaced from `start` to `end` (both included), turned along
+ * the row and numbered from `firstNumber` in steps of `step` — e.g. step 2 for theatres that number
+ * odd seats on one side.
  */
 export function generateRow(
 	start: SeatPosition,
 	end: SeatPosition,
 	count: number,
-	label: { section: string; row: string; firstNumber: number; step: number }
+	label: { section: string; row: string; firstNumber: number; step: number },
+	size: number
 ): PlanSeat[] {
 	const n = Math.max(1, Math.floor(count));
+	const rotation = n === 1 ? 0 : (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
 	return Array.from({ length: n }, (_, i) => {
 		const t = n === 1 ? 0 : i / (n - 1);
 		return {
@@ -39,9 +49,32 @@ export function generateRow(
 			row: label.row,
 			number: String(label.firstNumber + i * label.step),
 			x: start.x + (end.x - start.x) * t,
-			y: start.y + (end.y - start.y) * t
+			y: start.y + (end.y - start.y) * t,
+			width: size,
+			height: size,
+			rotation
 		};
 	});
+}
+
+/** "A" → "B", "3" → "4", "12a" stays as it is. */
+export function nextRowLabel(label: string): string {
+	if (/^\d+$/.test(label)) return String(Number(label) + 1);
+	if (/^[A-Y]$/i.test(label)) return String.fromCharCode(label.charCodeAt(0) + 1);
+	return label;
+}
+
+/**
+ * A number for a seat whose own reading is doubtful, from its neighbours in the row:
+ * between 89 and 91 it must be 90. Null when the neighbours don't tell.
+ */
+export function suggestNumber(previous: string | undefined, next: string | undefined): string | null {
+	const p = Number(previous);
+	const n = Number(next);
+	if (!previous || !next || !Number.isInteger(p) || !Number.isInteger(n)) return null;
+	if (n - p === 2) return String(p + 1);
+	if (p - n === 2) return String(n + 1);
+	return null;
 }
 
 /** New numbers for `seats` in reading order (left to right, or right to left). Returns numbers in input order. */

@@ -3,13 +3,18 @@
 		key: string;
 		x: number;
 		y: number;
+		width: number;
+		height: number;
+		/** Degrees, clockwise. */
+		rotation: number;
 		fill: string;
 		/** Short text inside the seat, usually its number. */
 		text?: string;
 		/** Accessible name / tooltip, e.g. "Row 3, seat 12". */
 		title: string;
 		selected?: boolean;
-		error?: boolean;
+		/** Red outline for errors, amber for things to check. */
+		status?: 'error' | 'warning';
 	}
 	export interface MapPoint {
 		x: number;
@@ -18,7 +23,7 @@
 </script>
 
 <script lang="ts">
-	import { Minus, Plus, Scan } from '@lucide/svelte';
+	import { Hash, Minus, Plus, Scan } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -27,22 +32,41 @@
 		imageUrl: string;
 		width: number;
 		height: number;
-		seatSize: number;
 		seats: MapSeat[];
 		cursor?: string;
+		/** Draw seat numbers on top of the seats (plans with printed numbers don't need them). */
+		showNumbers?: boolean;
 		onseatdown?: (key: string, point: MapPoint, event: PointerEvent) => void;
 		onbackgrounddown?: (point: MapPoint, event: PointerEvent) => void;
 		onmove?: (point: MapPoint, event: PointerEvent) => void;
 		onup?: (point: MapPoint, event: PointerEvent) => void;
-		/** Extra SVG drawn on top, in image coordinates (selection box, row preview, …). */
+		/** Extra SVG drawn between the image and the seats, in image coordinates (row lines, …). */
+		underlay?: Snippet;
+		/** Extra SVG drawn on top, in image coordinates (selection box, previews, …). */
 		overlay?: Snippet;
+		/** Extra controls next to the zoom buttons. */
+		toolbar?: Snippet;
 	}
-	let { imageUrl, width, height, seatSize, seats, cursor = 'default', onseatdown, onbackgrounddown, onmove, onup, overlay }: Props = $props();
+	let {
+		imageUrl,
+		width,
+		height,
+		seats,
+		cursor = 'default',
+		showNumbers = $bindable(true),
+		onseatdown,
+		onbackgrounddown,
+		onmove,
+		onup,
+		underlay,
+		overlay,
+		toolbar
+	}: Props = $props();
 
 	let svg: SVGSVGElement;
-	// 0 = fit to the available width; otherwise image pixels per screen pixel.
+	// 0 = fit to the available width; otherwise screen pixels per image pixel.
 	let zoom = $state(0);
-	const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3];
+	const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 
 	function toImage(event: PointerEvent): MapPoint {
 		const matrix = svg.getScreenCTM()!.inverse();
@@ -50,11 +74,8 @@
 		return { x: Math.max(0, Math.min(width, p.x)), y: Math.max(0, Math.min(height, p.y)) };
 	}
 
-	function currentScale() {
-		return svg ? svg.getBoundingClientRect().width / width : 1;
-	}
 	function zoomBy(direction: 1 | -1) {
-		const scale = zoom || currentScale();
+		const scale = zoom || svg.getBoundingClientRect().width / width;
 		const next = direction > 0 ? ZOOMS.find((z) => z > scale + 0.01) : [...ZOOMS].reverse().find((z) => z < scale - 0.01);
 		zoom = next ?? zoom;
 	}
@@ -68,14 +89,27 @@
 		else onbackgrounddown?.(point, event);
 	}
 
-	const fontSize = $derived(seatSize * 0.55);
+	const outline = (seat: MapSeat) =>
+		seat.status === 'error' ? '#dc2626' : seat.status === 'warning' ? '#f59e0b' : seat.selected ? '#0f172a' : seat.fill;
 </script>
 
 <div class="grid gap-2">
-	<div class="flex items-center gap-1">
+	<div class="flex flex-wrap items-center gap-1">
 		<Button type="button" variant="outline" size="icon-sm" onclick={() => zoomBy(-1)} aria-label={m.zoom_out()} title={m.zoom_out()}><Minus /></Button>
 		<Button type="button" variant="outline" size="icon-sm" onclick={() => zoomBy(1)} aria-label={m.zoom_in()} title={m.zoom_in()}><Plus /></Button>
 		<Button type="button" variant="outline" size="icon-sm" onclick={() => (zoom = 0)} aria-label={m.zoom_fit()} title={m.zoom_fit()}><Scan /></Button>
+		<Button
+			type="button"
+			variant={showNumbers ? 'secondary' : 'outline'}
+			size="icon-sm"
+			aria-pressed={showNumbers}
+			onclick={() => (showNumbers = !showNumbers)}
+			aria-label={m.show_numbers()}
+			title={m.show_numbers()}
+		>
+			<Hash />
+		</Button>
+		{@render toolbar?.()}
 	</div>
 	<div class="max-h-[75vh] overflow-auto rounded-lg border bg-white">
 		<svg
@@ -91,17 +125,33 @@
 			onpointerup={(e) => onup?.(toImage(e), e)}
 		>
 			<image href={imageUrl} {width} {height} />
+			{@render underlay?.()}
 			{#each seats as seat (seat.key)}
-				<g data-seat={seat.key} transform="translate({seat.x} {seat.y})">
+				{@const stroke = Math.max(1.5, Math.min(seat.width, seat.height) * (seat.selected || seat.status ? 0.16 : 0.08))}
+				<g data-seat={seat.key} transform="translate({seat.x} {seat.y}) rotate({seat.rotation})">
 					<title>{seat.title}</title>
-					<circle
-						r={seatSize / 2}
+					<!-- Translucent, so the plan's own drawing (and printed numbers) stays readable. -->
+					<rect
+						x={-seat.width / 2}
+						y={-seat.height / 2}
+						width={seat.width}
+						height={seat.height}
+						rx={Math.min(seat.width, seat.height) * 0.12}
 						fill={seat.fill}
-						stroke={seat.error ? '#dc2626' : seat.selected ? '#f59e0b' : 'white'}
-						stroke-width={seat.selected || seat.error ? seatSize * 0.18 : seatSize * 0.06}
+						fill-opacity={seat.selected ? 0.55 : 0.28}
+						stroke={outline(seat)}
+						stroke-width={stroke}
 					/>
-					{#if seat.text && seatSize >= 12}
-						<text text-anchor="middle" dominant-baseline="central" font-size={fontSize} fill="white" class="pointer-events-none font-medium">
+					{#if showNumbers && seat.text}
+						<text
+							text-anchor="middle"
+							dominant-baseline="central"
+							font-size={Math.min(seat.height * 0.6, seat.width / Math.max(2, seat.text.length) * 1.5)}
+							class="pointer-events-none fill-slate-950 font-semibold"
+							paint-order="stroke"
+							stroke="white"
+							stroke-width={Math.min(seat.width, seat.height) * 0.12}
+						>
 							{seat.text}
 						</text>
 					{/if}

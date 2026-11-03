@@ -39,6 +39,8 @@
 	});
 
 	let box = $state<{ start: MapPoint; end: MapPoint } | null>(null);
+	// Plans usually have their numbers printed; colours matter more here.
+	let showNumbers = $state(false);
 
 	function paint(seatIds: string[]) {
 		const next = { ...assignments };
@@ -54,6 +56,9 @@
 			key: seat.id,
 			x: seat.x,
 			y: seat.y,
+			width: seat.width,
+			height: seat.height,
+			rotation: seat.rotation,
 			fill: colorOf[assignments[seat.id]] ?? '#9ca3af',
 			text: seat.number,
 			title: [seat.section, seat.row && m.row_label({ row: seat.row }), m.seat_label({ number: seat.number })].filter(Boolean).join(', ')
@@ -161,8 +166,8 @@
 			imageUrl="/admin/organizers/{data.tenant.slug}/seat-plans/{plan.id}/image?v={plan.updatedAt.getTime()}"
 			width={plan.width}
 			height={plan.height}
-			seatSize={plan.seatSize}
 			seats={mapSeats}
+			bind:showNumbers
 			cursor="crosshair"
 			onseatdown={(key) => paint([key])}
 			onbackgrounddown={(point) => (box = { start: point, end: point })}

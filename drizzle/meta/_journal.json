@@ -36,6 +36,13 @@
       "when": 1793734488389,
       "tag": "0004_seat_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793738056769,
+      "tag": "0005_seat_shape",
+      "breakpoints": true
     }
   ]
 }

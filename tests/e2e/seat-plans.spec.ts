@@ -37,7 +37,7 @@ test('uploads a seat plan and places rows of seats', async ({ page, user, tenant
 	await dialog.getByRole('button', { name: 'Upload' }).click();
 	await expect(page.getByRole('heading', { name: 'Grosser Saal' })).toBeVisible();
 
-	await page.getByRole('button', { name: 'Row' }).click();
+	await page.getByRole('button', { name: 'Row', exact: true }).click();
 	await page.getByLabel('Seats', { exact: true }).fill('10');
 	await drag(page, [150, 200], [650, 200]);
 	await drag(page, [150, 260], [650, 260]);
@@ -51,7 +51,7 @@ test('uploads a seat plan and places rows of seats', async ({ page, user, tenant
 	await expect(page.getByText('20 seats')).toBeVisible();
 
 	// Give two seats the same label → the save is refused.
-	await page.getByRole('button', { name: 'Select' }).click();
+	await page.getByRole('button', { name: 'Select', exact: true }).click();
 	const seatB1 = await at(page, 150, 260);
 	await page.mouse.click(seatB1.x, seatB1.y);
 	await page.getByLabel('Row', { exact: true }).fill('A');
@@ -73,8 +73,8 @@ test('assigns the seats of an event to categories', async ({ page, user, tenant 
 		name: 'Saal',
 		seatSize: 20,
 		seats: [100, 200, 300, 400, 500, 600].flatMap((x) => [
-			{ section: '', row: 'A', number: String(x / 100), x, y: 200 },
-			{ section: '', row: 'B', number: String(x / 100), x, y: 300 }
+			{ section: '', row: 'A', number: String(x / 100), x, y: 200, width: 20, height: 20, rotation: 0 },
+			{ section: '', row: 'B', number: String(x / 100), x, y: 300, width: 20, height: 20, rotation: 0 }
 		])
 	});
 	const event = await createEvent(tenant, { 'name.de': 'Konzert', slug: 'konzert', startsAt: '2026-12-24T19:30', status: 'draft' });

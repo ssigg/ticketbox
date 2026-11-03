@@ -107,7 +107,10 @@ const seatInput = z.object({
 	row: z.string().trim().max(50),
 	number: z.string().trim().min(1).max(20),
 	x: z.number().finite(),
-	y: z.number().finite()
+	y: z.number().finite(),
+	width: z.number().positive().max(10000),
+	height: z.number().positive().max(10000),
+	rotation: z.number().min(-360).max(360)
 });
 const planInput = z.object({
 	name: z.string().trim().min(1).max(100),
@@ -150,9 +153,10 @@ export async function saveSeatPlan(tenantId: string, planId: string, input: unkn
 			// One statement for all moved/relabelled seats; the deferred unique constraint allows label swaps.
 			await tx.execute(sql`
 				update ${seats} as s
-				set section = v.section, row = v.row, number = v.number, x = v.x, y = v.y
+				set section = v.section, row = v.row, number = v.number, x = v.x, y = v.y,
+					width = v.width, height = v.height, rotation = v.rotation
 				from jsonb_to_recordset(${JSON.stringify(kept)}::jsonb)
-					as v(id uuid, section text, row text, number text, x float8, y float8)
+					as v(id uuid, section text, row text, number text, x float8, y float8, width float8, height float8, rotation float8)
 				where s.id = v.id and s.seat_plan_id = ${planId}
 			`);
 		}

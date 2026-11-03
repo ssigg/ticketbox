@@ -16,7 +16,7 @@ import {
 import { createTenant } from '../helpers/db';
 
 const hall = () => new File([readFileSync('tests/fixtures/hall.png')], 'hall.png', { type: 'image/png' });
-const seat = (row: string, number: string, x: number, y = 200) => ({ section: '', row, number, x, y });
+const seat = (row: string, number: string, x: number, y = 200) => ({ section: '', row, number, x, y, width: 16, height: 16, rotation: 0 });
 
 async function planOf(tenantId: string) {
 	const created = await createSeatPlan(tenantId, 'Saal', hall());
