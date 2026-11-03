@@ -63,6 +63,12 @@ Edit `src/lib/server/db/schema.ts`, then `npm run db:generate` and `npm run db:m
 - `src/lib/paraglide` is generated (`npm run i18n:compile`, also run by `npm install`, `check` and the Vite plugin).
 - To add a language, add it to `project.inlang/settings.json` and create `messages/<locale>.json`.
 
+## Seat plans
+
+Organizers upload a picture of a venue (PNG/JPEG/WebP, ≤ 5 MB, stored in Postgres) and place seats on it in the editor
+(single seats, whole rows, renumbering, moving). Events pick a plan and assign its seats to their price categories.
+Seat coordinates are image pixels. Uploads need `BODY_SIZE_LIMIT=6M` (adapter-node's default is 512 KB).
+
 ## Configuration
 
 `ORIGIN` is read at **build time** (`paths.origin`) — SvelteKit 3's Node adapter no longer reads it at runtime and otherwise assumes `https`, which breaks form submissions behind plain http.

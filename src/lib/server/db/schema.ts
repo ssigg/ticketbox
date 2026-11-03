@@ -2,6 +2,8 @@ import {
 	bigint,
 	boolean,
 	check,
+	customType,
+	doublePrecision,
 	index,
 	integer,
 	jsonb,
@@ -109,6 +111,53 @@ export const memberships = pgTable(
 	(t) => [primaryKey({ columns: [t.userId, t.tenantId] })]
 );
 
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
+
+// ── Seat plans ──
+
+/**
+ * A venue's seating, reusable across events: a background image with seats placed on it.
+ * The image lives in the database so every app instance can serve it without shared storage.
+ */
+export const seatPlans = pgTable('seat_plans', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	tenantId: uuid('tenant_id')
+		.notNull()
+		.references(() => tenants.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	image: bytea('image').notNull(),
+	imageType: text('image_type').notNull(),
+	// Image size in pixels; seat coordinates are in the same space.
+	width: integer('width').notNull(),
+	height: integer('height').notNull(),
+	// Seat diameter in image pixels.
+	seatSize: integer('seat_size').notNull().default(16),
+	...timestamps
+});
+
+export const seats = pgTable(
+	'seats',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		seatPlanId: uuid('seat_plan_id')
+			.notNull()
+			.references(() => seatPlans.id, { onDelete: 'cascade' }),
+		// Free text so plans can say "Balkon links", "A", "12" or "12a".
+		section: text('section').notNull().default(''),
+		row: text('row').notNull().default(''),
+		number: text('number').notNull(),
+		// Centre of the seat in image pixels.
+		x: doublePrecision('x').notNull(),
+		y: doublePrecision('y').notNull()
+	},
+	// The unique constraint is DEFERRABLE INITIALLY DEFERRED (edited in migration 0004) so saving a plan
+	// can swap labels between seats within one transaction.
+	(t) => [index().on(t.seatPlanId), unique().on(t.seatPlanId, t.section, t.row, t.number)]
+);
+
+export type SeatPlan = typeof seatPlans.$inferSelect;
+export type Seat = typeof seats.$inferSelect;
+
 // ── Events ──
 
 /** Text per locale, e.g. { de: 'Konzert', en: 'Concert' }. */
@@ -128,6 +177,8 @@ export const events = pgTable(
 		name: jsonb('name').$type<LocalizedText>().notNull(),
 		description: jsonb('description').$type<LocalizedText>().notNull().default({}),
 		venue: text('venue').notNull().default(''),
+		// Restrict: a plan in use cannot be deleted.
+		seatPlanId: uuid('seat_plan_id').references(() => seatPlans.id, { onDelete: 'restrict' }),
 		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
 		// Null means: from publishing / until the event starts.
 		salesStart: timestamp('sales_start', { withTimezone: true }),
@@ -204,6 +255,23 @@ export const reductionCategories = pgTable(
 );
 
 export type Reduction = typeof reductions.$inferSelect;
+
+/** Which category each seat of the event's plan is sold in; seats without a row are not for sale. */
+export const eventSeats = pgTable(
+	'event_seats',
+	{
+		eventId: uuid('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		seatId: uuid('seat_id')
+			.notNull()
+			.references(() => seats.id, { onDelete: 'cascade' }),
+		categoryId: uuid('category_id')
+			.notNull()
+			.references(() => categories.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.eventId, t.seatId] })]
+);
 export type ReductionKind = (typeof reductionKindEnum.enumValues)[number];
 export type EventStatus = (typeof eventStatusEnum.enumValues)[number];
 export type Tenant = typeof tenants.$inferSelect;

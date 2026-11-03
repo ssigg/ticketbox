@@ -15,7 +15,8 @@
 	const tabs = $derived([
 		{ href: base, label: m.event_details() },
 		{ href: `${base}/categories`, label: m.categories() },
-		{ href: `${base}/reductions`, label: m.reductions() }
+		{ href: `${base}/reductions`, label: m.reductions() },
+		{ href: `${base}/seating`, label: m.seat_plan() }
 	]);
 </script>
 

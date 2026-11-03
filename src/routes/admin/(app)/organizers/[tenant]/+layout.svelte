@@ -10,6 +10,7 @@
 	const tabs = $derived([
 		{ href: base, label: m.overview(), show: true },
 		{ href: `${base}/events`, label: m.events(), show: ['owner', 'admin'].includes(data.tenant.role) },
+		{ href: `${base}/seat-plans`, label: m.seat_plans(), show: ['owner', 'admin'].includes(data.tenant.role) },
 		{ href: `${base}/members`, label: m.members(), show: data.tenant.role === 'owner' }
 	]);
 </script>
