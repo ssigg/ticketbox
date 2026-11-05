@@ -9,7 +9,6 @@
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
-	import * as Select from '#lib/components/ui/select/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { detectSeatBoxes } from '#lib/seat-detection/boxes.ts';
 	import { loadImagePixels, readNumbersInBrowser } from '#lib/seat-detection/browser.ts';
@@ -33,15 +32,13 @@
 	// Working copy; saved as a whole. Reset whenever the server data changes (load, save).
 	let name = $state('');
 	let seatSize = $state(16);
-	let darkMode = $state<'auto' | 'on' | 'off'>('auto');
 	let seats = $state<EditorSeat[]>([]);
 	let saved = $state('');
-	const payload = () => ({ name, seatSize, darkMode, seats: seats.map(({ key: _, ...s }) => s) });
+	const payload = () => ({ name, seatSize, seats: seats.map(({ key: _, ...s }) => s) });
 	const snapshot = () => JSON.stringify(payload());
 	$effect.pre(() => {
 		name = data.plan.name;
 		seatSize = data.plan.seatSize;
-		darkMode = data.plan.darkMode;
 		seats = data.plan.seats.map((s) => ({
 			key: s.id,
 			id: s.id,
@@ -337,7 +334,6 @@
 		out_of_bounds: m.seat_plan_out_of_bounds,
 		invalid: m.check_input
 	};
-	const darkModeLabels = { auto: m.dark_mode_auto, on: m.dark_mode_on, off: m.dark_mode_off };
 	const center = (indices: number[]) => indices.map((i) => seats[i]).filter(Boolean);
 </script>
 
@@ -392,7 +388,6 @@
 		width={data.plan.width}
 		height={data.plan.height}
 		seats={mapSeats}
-		{darkMode}
 		bind:showNumbers
 		cursor={tool === 'select' ? 'default' : tool === 'rows' ? 'pointer' : 'crosshair'}
 		{onseatdown}
@@ -470,17 +465,6 @@
 				<div class="grid gap-2">
 					<Label for="plan-name">{m.event_name()}</Label>
 					<Input id="plan-name" bind:value={name} maxlength={100} />
-				</div>
-				<div class="grid gap-2">
-					<Label for="dark-mode">{m.adapt_to_dark_mode()}</Label>
-					<Select.Root type="single" bind:value={darkMode}>
-						<Select.Trigger id="dark-mode" class="w-full">{darkModeLabels[darkMode]()}</Select.Trigger>
-						<Select.Content>
-							{#each ['auto', 'on', 'off'] as const as option (option)}
-								<Select.Item value={option} label={darkModeLabels[option]()} />
-							{/each}
-						</Select.Content>
-					</Select.Root>
 				</div>
 				<p class="text-sm text-muted-foreground">{m.seat_count({ count: seats.length })}</p>
 			</Card.Content>

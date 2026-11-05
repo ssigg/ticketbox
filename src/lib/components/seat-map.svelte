@@ -23,11 +23,8 @@
 </script>
 
 <script lang="ts">
-	import { Contrast, Hash, Minus, Plus, Scan } from '@lucide/svelte';
-	import { mode } from 'mode-watcher';
+	import { Hash, Minus, Plus, Scan } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
-	import { loadImagePixels } from '#lib/seat-detection/browser.ts';
-	import { darkenDrawing, isLineDrawing, type Rgb } from '#lib/seat-plan-theme.ts';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -39,8 +36,6 @@
 		cursor?: string;
 		/** Draw seat numbers on top of the seats (plans with printed numbers don't need them). */
 		showNumbers?: boolean;
-		/** Converting the image in dark mode: auto = line drawings only, not photos. */
-		darkMode?: 'auto' | 'on' | 'off';
 		onseatdown?: (key: string, point: MapPoint, event: PointerEvent) => void;
 		onbackgrounddown?: (point: MapPoint, event: PointerEvent) => void;
 		onmove?: (point: MapPoint, event: PointerEvent) => void;
@@ -59,7 +54,6 @@
 		seats,
 		cursor = 'default',
 		showNumbers = $bindable(true),
-		darkMode = 'auto',
 		onseatdown,
 		onbackgrounddown,
 		onmove,
@@ -75,53 +69,6 @@
 	const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 
 	let scroller: HTMLDivElement;
-
-	// ── Dark mode ──
-	// The image is converted in the browser with the theme's own colours and shown as an object URL.
-	let converted = $state<string | null>(null);
-	let showOriginal = $state(false);
-	const dark = $derived(mode.current === 'dark');
-	const useConverted = $derived(dark && !!converted && !showOriginal);
-
-	/** A CSS colour (any syntax, e.g. oklch) as RGB, by letting a canvas paint it. */
-	function cssColor(value: string): Rgb {
-		const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
-		context.fillStyle = value;
-		context.fillRect(0, 0, 1, 1);
-		const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-		return [r, g, b];
-	}
-
-	$effect(() => {
-		if (!dark || darkMode === 'off') return;
-		const url = imageUrl;
-		const mustConvert = darkMode === 'on';
-		let cancelled = false;
-		let objectUrl: string | null = null;
-		(async () => {
-			const pixels = await loadImagePixels(url);
-			if (cancelled || (!mustConvert && !isLineDrawing(pixels))) return;
-			const style = getComputedStyle(scroller);
-			const background = cssColor(style.getPropertyValue('--card'));
-			const text = cssColor(style.getPropertyValue('--foreground'));
-			// Lines slightly softer than full text colour, so a dense plan doesn't glare.
-			const foreground = text.map((c, i) => background[i] + (c - background[i]) * 0.85) as Rgb;
-			const result = darkenDrawing(pixels, background, foreground);
-			const canvas = document.createElement('canvas');
-			canvas.width = result.width;
-			canvas.height = result.height;
-			canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(result.data), result.width, result.height), 0, 0);
-			const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
-			if (cancelled || !blob) return;
-			objectUrl = URL.createObjectURL(blob);
-			converted = objectUrl;
-		})();
-		return () => {
-			cancelled = true;
-			converted = null;
-			if (objectUrl) URL.revokeObjectURL(objectUrl);
-		};
-	});
 
 	function toImage(event: { clientX: number; clientY: number }): MapPoint {
 		const matrix = svg.getScreenCTM()!.inverse();
@@ -195,15 +142,7 @@
 	}
 
 	const outline = (seat: MapSeat) =>
-		seat.status === 'error'
-			? '#dc2626'
-			: seat.status === 'warning'
-				? '#f59e0b'
-				: seat.selected
-					? dark && useConverted
-						? '#f8fafc'
-						: '#0f172a'
-					: seat.fill;
+		seat.status === 'error' ? '#dc2626' : seat.status === 'warning' ? '#f59e0b' : seat.selected ? '#0f172a' : seat.fill;
 </script>
 
 <div class="grid gap-2">
@@ -222,23 +161,9 @@
 		>
 			<Hash />
 		</Button>
-		{#if dark && converted}
-			<Button
-				type="button"
-				variant={showOriginal ? 'secondary' : 'outline'}
-				size="icon-sm"
-				aria-pressed={showOriginal}
-				onclick={() => (showOriginal = !showOriginal)}
-				aria-label={m.show_original()}
-				title={m.show_original()}
-			>
-				<Contrast />
-			</Button>
-		{/if}
 		{@render toolbar?.()}
 	</div>
-	<!-- Converted plans sit on the card colour; originals (and photos) keep a white frame. -->
-	<div bind:this={scroller} class="max-h-[75vh] overflow-auto rounded-lg border {useConverted ? 'bg-card' : 'bg-white'}">
+	<div bind:this={scroller} class="max-h-[75vh] overflow-auto rounded-lg border bg-white">
 		<!-- Focusable so its keyboard shortcuts (delete, move, select all) reach the editor. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<svg
@@ -250,14 +175,13 @@
 			role="application"
 			tabindex="0"
 			aria-label={m.seat_plan()}
-			data-image={useConverted ? 'dark' : 'original'}
 			onpointerdown={down}
 			onpointermove={move}
 			onpointerup={up}
 			onpointercancel={stopAutoScroll}
 			onlostpointercapture={stopAutoScroll}
 		>
-			<image href={useConverted ? converted : imageUrl} {width} {height} />
+			<image href={imageUrl} {width} {height} />
 			{@render underlay?.()}
 			{#each seats as seat (seat.key)}
 				{@const stroke = Math.max(1.5, Math.min(seat.width, seat.height) * (seat.selected || seat.status ? 0.16 : 0.08))}

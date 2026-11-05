@@ -19,7 +19,6 @@ const planColumns = {
 	width: seatPlans.width,
 	height: seatPlans.height,
 	seatSize: seatPlans.seatSize,
-	darkMode: seatPlans.darkMode,
 	updatedAt: seatPlans.updatedAt
 };
 
@@ -116,7 +115,6 @@ const seatInput = z.object({
 const planInput = z.object({
 	name: z.string().trim().min(1).max(100),
 	seatSize: z.number().int().min(2).max(500),
-	darkMode: z.enum(['auto', 'on', 'off']).default('auto'),
 	seats: z.array(seatInput).max(MAX_SEATS)
 });
 export type SeatPlanInput = z.input<typeof planInput>;
@@ -135,7 +133,7 @@ export async function saveSeatPlan(tenantId: string, planId: string, input: unkn
 	if (!plan) return null;
 	const parsed = planInput.safeParse(input);
 	if (!parsed.success) return { ok: false, error: 'invalid' };
-	const { name, seatSize, darkMode, seats: list } = parsed.data;
+	const { name, seatSize, seats: list } = parsed.data;
 
 	const duplicates = duplicateLabels(list);
 	if (duplicates.length) return { ok: false, error: 'duplicates', seats: duplicates };
@@ -147,7 +145,7 @@ export async function saveSeatPlan(tenantId: string, planId: string, input: unkn
 	const created = list.filter((s) => !s.id || !existingIds.has(s.id)).map(({ id: _, ...s }) => s);
 
 	await db.transaction(async (tx) => {
-		await tx.update(seatPlans).set({ name, seatSize, darkMode }).where(eq(seatPlans.id, planId));
+		await tx.update(seatPlans).set({ name, seatSize }).where(eq(seatPlans.id, planId));
 		await tx
 			.delete(seats)
 			.where(and(eq(seats.seatPlanId, planId), kept.length ? notInArray(seats.id, kept.map((s) => s.id)) : undefined));

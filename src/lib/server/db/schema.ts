@@ -115,9 +115,6 @@ const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
 
 // ── Seat plans ──
 
-/** auto: convert line drawings, leave photos as they are. */
-export const darkModeEnum = pgEnum('seat_plan_dark_mode', ['auto', 'on', 'off']);
-
 /**
  * A venue's seating, reusable across events: a background image with seats placed on it.
  * The image lives in the database so every app instance can serve it without shared storage.
@@ -135,8 +132,6 @@ export const seatPlans = pgTable('seat_plans', {
 	height: integer('height').notNull(),
 	// Size of seats placed by hand, in image pixels.
 	seatSize: integer('seat_size').notNull().default(16),
-	// Whether the image is converted for dark mode (see seat-plan-theme.ts).
-	darkMode: darkModeEnum('dark_mode').notNull().default('auto'),
 	...timestamps
 });
 

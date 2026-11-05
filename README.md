@@ -75,9 +75,6 @@ pixels. Two ways to annotate a plan:
   clicking them in order.
 - **Place by hand**: single seats, rows by dragging, renumbering.
 
-In dark mode, line-drawing plans are converted in the browser (`src/lib/seat-plan-theme.ts`): greys are inverted into
-the theme's colours, coloured areas keep their hue, photos are left alone. Per plan: automatic / always / never.
-
 Tesseract's worker, core and English model are served by the app itself under `/ocr/` from `node_modules`.
 Events pick a plan and assign its seats to their price categories. Uploads need `BODY_SIZE_LIMIT=6M`
 (adapter-node's default is 512 KB).

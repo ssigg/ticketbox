@@ -229,10 +229,5 @@
 	"problem_uncertain": "number unclear",
 	"numbers_not_found": "Numbers not found:",
 	"use_suggestion": "Use this number",
-	"looks_right": "Looks right",
-	"show_original": "Show original image",
-	"adapt_to_dark_mode": "Adapt to dark mode",
-	"dark_mode_auto": "Automatic (drawings only)",
-	"dark_mode_on": "Always",
-	"dark_mode_off": "Never"
+	"looks_right": "Looks right"
 }

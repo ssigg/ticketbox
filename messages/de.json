@@ -229,10 +229,5 @@
 	"problem_uncertain": "Nummer unsicher",
 	"numbers_not_found": "Nicht gefundene Nummern:",
 	"use_suggestion": "Diese Nummer verwenden",
-	"looks_right": "Stimmt",
-	"show_original": "Originalbild anzeigen",
-	"adapt_to_dark_mode": "An dunkles Design anpassen",
-	"dark_mode_auto": "Automatisch (nur Zeichnungen)",
-	"dark_mode_on": "Immer",
-	"dark_mode_off": "Nie"
+	"looks_right": "Stimmt"
 }
